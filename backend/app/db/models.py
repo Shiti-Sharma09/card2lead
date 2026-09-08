@@ -4,7 +4,7 @@ Phase 0: AuditLog
 Phase 1: User
 Phase 2: Event, Assignee
 Phase 3: EventAccess
-Later phases add IdempotencyKey.
+Phase 5: IdempotencyKey
 """
 
 from __future__ import annotations
@@ -74,6 +74,21 @@ class EventAccess(SQLModel, table=True):
     event_id: int = Field(foreign_key="events.id", index=True)
     granted_by: str | None = Field(default=None)
     granted_at: datetime = Field(default_factory=_utcnow)
+
+
+class IdempotencyKey(SQLModel, table=True):
+    """One per lead submission. `result` is NULL while the write is in flight,
+    then the JSON of the response we returned. A repeat of the same key is a
+    duplicate submission and writes nothing new."""
+
+    __tablename__ = "idempotency_keys"
+
+    id: int | None = Field(default=None, primary_key=True)
+    key: str = Field(unique=True, index=True)
+    user_id: int = Field(index=True)
+    event_id: int
+    result: str | None = Field(default=None)
+    created_at: datetime = Field(default_factory=_utcnow, index=True)
 
 
 class AuditLog(SQLModel, table=True):

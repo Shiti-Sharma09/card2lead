@@ -14,5 +14,6 @@ google-auth>=2.34,<3
 groq>=0.11,<1
 pillow>=10.4,<12
 pillow-heif>=0.18,<1
+tzdata>=2024.1  # IANA time zones on Windows (for the IST timestamp column)
 # pillow                    # Phase 4
 # pillow-heif               # Phase 4 (iPhone HEIC)
