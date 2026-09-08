@@ -1,4 +1,4 @@
-# referral_card
+# card2lead
 
 Event-based business-card lead capture.
 
