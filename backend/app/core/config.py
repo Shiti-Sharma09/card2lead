@@ -26,9 +26,12 @@ class Settings(BaseSettings):
     groq_model: str = "qwen/qwen3.8-27b"
     groq_max_per_min: int = 25
     groq_max_per_day: int = 1000
+    groq_timeout_s: int = 30
 
     google_service_account_file: str = "./secrets/gsa.json"
     google_sheet_id: str = ""
+
+    max_upload_mb: int = 12
 
     # comma-separated names to seed the "Assigned To" list on first boot
     seed_assignees: str = "NITISH,HARSHAD"
