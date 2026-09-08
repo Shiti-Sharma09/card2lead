@@ -45,3 +45,8 @@ new_question_for_shiti.txt
 
 # stale — describes the first prototype stack, not this repo
 CLAUDE.md
+
+# old-prototype files kept only in intial_stage/
+/requirements.txt
+/TESTING.md
+/scripts/
