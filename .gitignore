@@ -1,0 +1,47 @@
+# --- secrets / environment ---------------------------------------------------
+.env
+*.env
+!.env.example
+!**/.env.example
+secrets/
+*service-account*.json
+*service_account*.json
+gsa*.json
+
+# --- python ----------------------------------------------------------------
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.egg-info/
+
+# --- runtime / data ------------------------------------------------------------
+*.db
+*.sqlite
+*.sqlite3
+test_app.db
+logs/
+backend/data/
+
+# --- node / frontend --------------------------------------------------------
+node_modules/
+frontend/dist/
+dist/
+
+# --- os / editor ----------------------------------------------------------------
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# --- reference-only, not part of this repo -------------------------------------
+_deployed-backend-ref/
+Card Reader.postman_collection 1.json
+new_question_for_shiti.txt
+
+# stale — describes the first prototype stack, not this repo
+CLAUDE.md

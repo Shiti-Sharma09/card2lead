@@ -1,0 +1,384 @@
+# Business Card OCR Lead Capture Application
+
+## 1. Objective
+
+Build a simple application that allows a user to **capture a photo of a personal or business card using the device camera**, extract relevant contact information using an OCR API, allow the user to review and correct the extracted information, and finally save the lead details.
+
+The application is intended to support the same lead-capture workflow used on the existing [Antino referral platform](https://www.antino.com/referral), with the initial implementation storing the captured information in an **Excel file**. In a later phase, this can be connected directly to the existing backend API so that captured leads are automatically transferred to the Sales team.
+
+---
+
+# 2. Overall User Flow
+
+The expected flow is:
+
+**Open Application → Open Camera → Capture Business Card → OCR Extraction → Review/Edit Information → Add Notes → Assign Lead → Save → Excel**
+
+Later:
+
+**Save → Backend API → Sales Team**
+
+---
+
+# 3. Step 1: Camera Interface
+
+The application should initially provide a simple interface containing a **Camera** button.
+
+When the user clicks the button:
+
+1. The device camera should open.
+2. The user should be able to position the business card inside the camera view.
+3. The user captures a photograph of the card.
+4. The captured image is passed to the OCR processing stage.
+
+The application should support business cards containing information such as:
+
+* Name
+* Company
+* Designation/Title
+* Email address
+* Phone number
+
+---
+
+# 4. Step 2: OCR Processing
+
+After the photograph is captured, the application should send the image to an **OCR API**.
+
+The OCR service should attempt to identify and extract the required fields:
+
+| Field        | Description                                |
+| ------------ | ------------------------------------------ |
+| Name         | Name of the person                         |
+| Company      | Company/organization mentioned on the card |
+| Title        | Person's designation or job title          |
+| Email        | Email address                              |
+| Phone Number | Contact number                             |
+
+The OCR response should be mapped into the application's corresponding fields.
+
+For example:
+
+```text
+Business Card Image
+        ↓
+      OCR API
+        ↓
+Extracted Information
+        ↓
+Name: Rahul Sharma
+Company: ABC Technologies
+Title: Sales Director
+Email: rahul@abc.com
+Phone: +91 XXXXX XXXXX
+```
+
+---
+
+# 5. Step 3: Review and Edit Screen
+
+Once OCR processing is completed, a **new page** should open containing a form-like interface.
+
+The fields successfully extracted from the business card should already be populated.
+
+For example:
+
+```text
+Name:          Rahul Sharma
+Company:       ABC Technologies
+Title:         Sales Director
+Email:         rahul@abc.com
+Phone Number:  +91 XXXXX XXXXX
+```
+
+The user should be able to manually edit **any of these fields**.
+
+This is important because OCR may occasionally make mistakes.
+
+For example, if OCR incorrectly extracts:
+
+```text
+Rahul Sharma
+```
+
+as:
+
+```text
+RahuI Sharma
+```
+
+the user should be able to correct it before saving.
+
+---
+
+# 6. Handling Missing Information
+
+Not every business card will contain every required field.
+
+For example, a card may contain:
+
+```text
+Name: Rahul Sharma
+Company: ABC Technologies
+Email: rahul@abc.com
+```
+
+but may not contain a phone number.
+
+In this case:
+
+* The available fields should be automatically populated.
+* Missing fields should remain empty.
+* The user should be able to manually enter the missing information.
+
+The application should therefore **not assume that every field will always be available from OCR**.
+
+---
+
+# 7. Notes Section
+
+Below the contact information, provide a **Notes** field.
+
+This should be a free-text area where the user can manually record additional information about the interaction.
+
+For example:
+
+```text
+Notes:
+
+Met at the AI conference.
+Interested in our AI development services.
+Follow up next week.
+```
+
+The notes should be saved along with the extracted contact information.
+
+---
+
+# 8. Assign Section
+
+Add an **Assign** field below the Notes section.
+
+This should be a dropdown containing the following two options:
+
+```text
+NITISH
+HARSHAD
+```
+
+The user can select the salesperson/person responsible for following up with the lead.
+
+Example:
+
+```text
+Assign:
+[ HARSHAD ▼ ]
+```
+
+The selected value should also be stored with the lead information.
+
+---
+
+# 9. Final Form Structure
+
+The final review screen should therefore contain:
+
+```text
+-----------------------------------------
+        Business Card Information
+-----------------------------------------
+
+Name
+[ Rahul Sharma                    ]
+
+Company
+[ ABC Technologies               ]
+
+Title
+[ Sales Director                 ]
+
+Email
+[ rahul@abc.com                  ]
+
+Phone Number
+[ +91 XXXXX XXXXX                ]
+
+Notes
+[ Met at AI conference.          ]
+[ Interested in our services.    ]
+
+Assign
+[ HARSHAD ▼                      ]
+
+              [ SAVE ]
+-----------------------------------------
+```
+
+All fields should remain editable before the user saves the record.
+
+---
+
+# 10. Excel Storage
+
+For the initial implementation, the application should save the final reviewed information into an **Excel file**.
+
+Each captured business card should result in one row.
+
+The Excel structure can be:
+
+| Name         | Company          | Title          | Email                                 | Phone Number    | Notes                | Assigned To |
+| ------------ | ---------------- | -------------- | ------------------------------------- | --------------- | -------------------- | ----------- |
+| Rahul Sharma | ABC Technologies | Sales Director | [rahul@abc.com](mailto:rahul@abc.com) | +91 XXXXX XXXXX | Met at AI conference | HARSHAD     |
+
+The important point is that the Excel should contain the **final user-reviewed values**, not blindly store the raw OCR output.
+
+Therefore:
+
+**OCR Output → User Correction → Final Data → Excel**
+
+---
+
+# 11. Future Backend Integration
+
+The initial version should use Excel as the temporary storage layer.
+
+The future implementation should replace or supplement Excel with the backend API currently used by the existing [Antino referral platform](https://www.antino.com/referral).
+
+The future flow would become:
+
+```text
+Business Card
+      ↓
+Camera
+      ↓
+OCR API
+      ↓
+Extract Contact Information
+      ↓
+User Reviews / Corrects
+      ↓
+Notes + Assignment
+      ↓
+Backend API
+      ↓
+Sales Team
+```
+
+This will allow the captured lead to move directly into the existing Sales workflow rather than requiring manual transfer from Excel.
+
+---
+
+# 12. Key Requirements
+
+### Camera
+
+* Open device camera when the Camera button is clicked.
+* Capture the business card image.
+* Pass the captured image to OCR.
+
+### OCR
+
+Extract:
+
+* Name
+* Company
+* Title/designation
+* Email
+* Phone number
+
+### Review
+
+* Automatically populate successfully extracted fields.
+* Leave unavailable fields empty.
+* Allow the user to manually enter missing information.
+* Allow correction of incorrect OCR results.
+
+### Additional Information
+
+Provide:
+
+* Notes field.
+* Assign dropdown.
+
+Assign options:
+
+* NITISH
+* HARSHAD
+
+### Storage
+
+For the first version:
+
+* Save records to Excel.
+* Store one lead per row.
+* Preserve all reviewed/corrected information.
+
+### Future Integration
+
+Later:
+
+* Connect the application to the existing referral backend API.
+* Send captured leads directly to the Sales team.
+* Replace the temporary Excel-based workflow with the backend integration.
+
+---
+
+# 13. End-to-End Architecture
+
+```text
+                    User
+                     │
+                     ▼
+              Camera Button
+                     │
+                     ▼
+              Camera Interface
+                     │
+                     ▼
+             Capture Card Image
+                     │
+                     ▼
+                  OCR API
+                     │
+                     ▼
+             Extracted Fields
+                     │
+          ┌──────────┴──────────┐
+          │                     │
+          ▼                     ▼
+      Available             Missing Data
+       Fields                    │
+          │                      │
+          └──────────┬───────────┘
+                     ▼
+               Review / Edit
+                     │
+                     ▼
+                   Notes
+                     │
+                     ▼
+                  Assign
+                     │
+                     ▼
+                   Save
+                     │
+                     ▼
+                  Excel
+                     │
+              Future Phase
+                     ▼
+               Backend API
+                     │
+                     ▼
+                Sales Team
+```
+
+## Final Goal
+
+The application should make business card lead capture **fast, structured, and human-verifiable**.
+
+OCR handles the repetitive extraction work, while the user remains in control of the final information by reviewing and correcting the extracted data before it is saved. The first implementation will use Excel for storage, while the architecture should keep the data flow structured enough to connect with the existing referral backend API in the next phase.
+
+  there will be no single card format the cards can be of any format
+  and inside card the text present can be in any font so the application and pipeline should be able to handle
+  everything procesly

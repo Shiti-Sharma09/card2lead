@@ -1,0 +1,526 @@
+==========================================================================
+QUESTIONS FOR SHITI
+Project: Business Card OCR Lead Capture Application
+Date raised: 2026-09-03
+==========================================================================
+
+HOW TO USE THIS FILE
+--------------------
+Type your answer on the blank "ANSWER:" line under each question.
+Feel free to write as much as you want; add extra lines if needed.
+If a question does not matter to you, write "don't care / your call"
+and I will pick a sensible default.
+
+Questions are grouped. The ones in section A and section C are the ones
+that actually block me from starting; the rest shape the details.
+
+
+==========================================================================
+A. PLATFORM & TECH STACK  (blocking)
+==========================================================================
+
+A1. What kind of application should this be?
+    Options I'm considering:
+      (a) Mobile-friendly WEB app (opens in the phone browser, uses the
+          browser camera). Easiest to share via a URL, no install, works
+          on both Android and iPhone.
+      (b) Installable PWA (same as web app but "Add to Home Screen",
+          can work partly offline).
+      (c) Native mobile app (React Native / Flutter) - needs app store
+          or sideloading, more setup.
+      (d) Desktop app.
+    Which one do you want for this first version?
+
+    ANSWER: option A look great
+
+
+
+A2. Do you have a preferred programming language / framework / stack?
+    (e.g. React + Node, plain HTML/JS, Python + Flask backend, Next.js,
+    Flutter, etc.) Or should I choose what fits best?
+
+    ANSWER: react + python
+
+
+
+A3. Where will this run?
+      (a) Just on your machine / run locally during demos.
+      (b) Deployed to a server so others can open it from a URL.
+      (c) Hosted on a specific platform Antino already uses
+          (Vercel, AWS, internal server, etc.)?
+
+    ANSWER:AWS or on-prem
+
+
+
+A4. Is this a quick prototype / proof-of-concept, or is it meant to be
+    used for real by the sales team right away? This changes how much
+    I invest in error handling, auth, polish, etc.
+
+    ANSWER: will be used used for real by the sales team right away
+
+
+
+A5. Do you have a deadline or timeframe for the first working version?
+
+    ANSWER: yes as soon as i can wrapp up in 2 days
+
+
+
+==========================================================================
+B. CAMERA
+==========================================================================
+
+B1. Is it acceptable to use the browser camera (getUserMedia) inside a
+    web page, or must it launch the phone's real native camera app?
+
+    ANSWER: browser camera will be fine choice
+
+
+
+B2. Besides taking a photo, should the user also be allowed to UPLOAD an
+    existing image from their gallery / files? (Useful for testing and
+    for cards photographed earlier.)
+
+    ANSWER: yeah
+
+
+
+B3. Should the user see a "preview / retake" step after capturing, before
+    OCR runs? (Recommended - avoids wasting OCR calls on blurry shots.)
+
+    ANSWER: we can add intial checking of image if the image is shaky or blurry it wil ask user to recapture
+
+
+
+B4. One card per photo only, or should the app handle a photo that
+    contains multiple cards at once?
+
+    ANSWER: 1 card per photo
+
+
+
+B5. Should I do any automatic image cleanup before OCR (auto-crop to the
+    card, straighten, boost contrast)? This improves accuracy but adds
+    work. Yes / No / your call.
+
+    ANSWER: yes we've to do clean-ups so OCR can perform bettter
+
+
+
+B6. Should the captured card image itself be SAVED somewhere (a folder,
+    or referenced in the Excel), or is it thrown away after OCR?
+
+    ANSWER: thrown away after OCR
+
+
+
+==========================================================================
+C. OCR API  (blocking)
+==========================================================================
+
+C1. Which OCR service do you want to use, or do you already have an
+    account / API key for one? Common choices:
+      - Google Cloud Vision
+      - AWS Textract
+      - Azure AI Vision
+      - Mindee / Klippa (business-card specific)
+      - OCR.space (has a free tier)
+      - An LLM vision model (Claude, GPT-4 vision, Gemini) that reads the
+        image AND returns structured fields in one call
+    The requirement says "any card format, any font". Plain OCR only
+    gives you a blob of text and then I still have to guess which line is
+    the name, which is the title, etc. An LLM vision model handles
+    arbitrary layouts far better. Are you OK with me using an LLM vision
+    model for the extraction? If not, which OCR API?
+
+    ANSWER: yes use vllm
+
+
+
+C2. Do you already have API keys / billing set up for whichever service,
+    or do I need to help you create an account? Is there a cost limit I
+    should stay under (e.g. must use only free tiers)?
+
+    ANSWER: first we've to lock one option then we'll do this later
+
+
+
+C3. Privacy: is it OK for business-card photos to be sent to a
+    third-party cloud API (Google/AWS/Anthropic/etc.)? Or is there a
+    requirement to keep all processing local / on Antino infrastructure?
+
+    ANSWER:yes there is no privacy issue cuz businnes card are given to anybody
+
+
+
+C4. What languages / scripts will appear on the cards? English only, or
+    also Hindi or other languages? (Affects OCR configuration.)
+
+    ANSWER: English
+
+
+
+==========================================================================
+D. FIELDS & DATA MODEL
+==========================================================================
+
+D1. The spec lists 5 fields: Name, Company, Title, Email, Phone.
+    Business cards often also have: Website, Address, second phone
+    (mobile vs landline), second email, WhatsApp, LinkedIn.
+    Do you want any of these captured too, or strictly the 5?
+
+    ANSWER:only 5 for now
+
+D2. If a card has TWO phone numbers (or two emails), what should happen?
+      (a) Put them all in the one Phone field separated by comma.
+      (b) Only keep the mobile / first one.
+      (c) Add extra fields.
+
+    ANSWER: A option is fine
+
+
+
+D3. Should any field be REQUIRED before the user can hit Save?
+    e.g. "Name is required" or "must have at least an email OR a phone".
+    Or allow saving even if everything is blank?
+
+    ANSWER:
+
+
+
+D4. Do you want format validation on Email and Phone (warn the user if
+    an email has no "@", etc.)? Warn-only, or block Save?
+
+    ANSWER: the vllmwill be smart enough to check @ and if its not present person can maually add it in field block
+
+
+
+D5. Should low-confidence fields be visually highlighted on the review
+    screen so the user knows what to double-check? (Only possible with
+    some OCR services.)
+
+    ANSWER: we can set a benchmark of 95-99 percentage and below it prescrie user to re-check these field and fill ir manually
+
+
+
+D6. Should the review screen also DISPLAY the captured card image next to
+    the form, so the user can compare while correcting? (Recommended.)
+
+    ANSWER: yes
+
+
+
+==========================================================================
+E. NOTES & ASSIGN
+==========================================================================
+
+E1. The Assign dropdown has exactly NITISH and HARSHAD. Is that list
+    fixed, or should it be easy for you to edit later (e.g. a small
+    config list)? Any more names coming?
+
+    ANSWER: for there there is only 2 but can be extended later
+
+
+
+E2. Should Assign have a default value, or must the user actively pick
+    one every time?
+
+    ANSWER: user actively pick one every time
+
+
+
+E3. For the future backend integration, does NITISH / HARSHAD need to map
+    to something specific (an email address, an employee ID, a user ID in
+    the referral system)? If you know those values, share them.
+
+    ANSWER: i don't these things will update you about these in future
+
+
+
+E4. Should the app automatically record extra metadata with each lead,
+    such as:
+      - Date & time captured
+      - Who captured it (the person using the app)
+      - GPS location / event name
+    Which of these do you want, if any?
+
+    ANSWER: for now we can save date/time but can be update in future
+
+
+
+E5. If "who captured it" matters, how does the app know who is using it?
+    (A name they type once, a login, or not needed?)
+
+    ANSWER: not for now answered in E4.
+
+
+
+==========================================================================
+F. EXCEL STORAGE
+==========================================================================
+
+F1. Where should the Excel file live?
+      (a) A local file on the machine running the app.
+      (b) A specific folder in your OneDrive (the project is under
+          "OneDrive - Antino" - should it save there?). If so, give me
+          the exact folder/path.
+      (c) Google Sheets instead of an .xlsx file.
+      (d) SharePoint / shared network drive.
+
+    ANSWER: option A looks fine
+
+
+
+F2. One single master Excel file that every capture is appended to, or a
+    new file per day / per event / per session?
+
+    ANSWER: for now one master excel 
+
+
+
+F3. Confirm the exact columns and their order. Spec suggests:
+      Name | Company | Title | Email | Phone Number | Notes | Assigned To
+    Do you want me to ADD any of these:
+      Timestamp | Captured By | Card Image filename | Website | Address |
+      Raw OCR text | Status (New/Contacted)
+    List what you want.
+
+    ANSWER: already answered in E4
+
+
+
+F4. If two people use the app at the same time, they can't both write to
+    the same .xlsx file (Excel locks it). Is concurrent use a real
+    scenario, or will only one person use it at a time? (If concurrent,
+    Google Sheets or a small database is a better fit than .xlsx.)
+
+    ANSWER: for now use excel
+
+
+
+F5. Duplicate handling: if the same person's card is captured twice,
+    should the app warn about the duplicate, overwrite the old row, or
+    just add another row?
+
+    ANSWER: add another row 
+
+
+
+F6. Is there an existing Excel template / sheet from the current referral
+    workflow that this output needs to match exactly? If so, share it.
+
+    ANSWER: no there's not
+
+
+
+==========================================================================
+G. FUTURE BACKEND INTEGRATION
+==========================================================================
+
+G1. Do you have any documentation for the antino.com/referral backend
+    API - endpoint URL, authentication method, the JSON body it expects?
+    Even though it's "phase 2", knowing the target shape now lets me
+    design the data so the switch is painless later.
+
+    ANSWER: no i don't have
+
+
+
+G2. Should I build the storage layer as "pluggable" from day one (so
+    Excel today, API later, just by changing a setting) even though only
+    Excel is wired up now? This costs a little extra time upfront.
+
+    ANSWER:no currently only build for excel
+
+
+
+==========================================================================
+H. ACCESS, BRANDING, MISC
+==========================================================================
+
+H1. Does the app need any login / password, or is it open to anyone who
+    has the link / the device?
+
+    ANSWER: open to anyone who has the link
+
+
+
+H2. Any branding requirements - Antino logo, specific colours, app name
+    shown in the title bar?
+
+    ANSWER: yeah you can touch up which makes it look good
+
+
+
+H3. Roughly how many people will use this, and in what setting?
+    (e.g. "3 sales reps at conferences", "just me for a demo".)
+
+    ANSWER: for now its me in future user can be incresed by 2-3
+
+
+
+H4. Does it need to work with NO internet at the moment of capture
+    (queue the lead and upload later when back online), or will there
+    always be internet when capturing?
+
+    ANSWER: always internet will be there
+
+
+
+H5. Anything else about this project I haven't asked that you think I
+    should know?
+
+    ANSWER: no
+
+
+
+==========================================================================
+ADDITIONAL QUERIES  (round 2 - based on your answers)
+==========================================================================
+
+Same rule: write your reply on the "ANSWER:" line under each item.
+A few of these are just "confirm my plan" - a yes/no is enough.
+
+
+--------------------------------------------------------------------------
+MY DEFAULT TECH CHOICES (tell me only if you disagree)
+--------------------------------------------------------------------------
+  - Frontend:  React (Vite), Tailwind for styling
+  - Backend:   Python + FastAPI
+  - Excel:     openpyxl, one master .xlsx on the server, append one row
+  - Image fix: OpenCV + Pillow
+  - VLM:       pending AQ2 below
+
+    DISAGREE WITH ANY OF THE ABOVE?  ANSWER:
+
+
+
+--------------------------------------------------------------------------
+AQ1. Required fields before Save  (your D3 was left blank)
+--------------------------------------------------------------------------
+    My plan: never hard-block Save, but if Name is empty AND both Email
+    and Phone are empty, pop a soft "This lead has no name or contact
+    info - save anyway?" confirm. Everything else can be blank silently.
+    OK?
+
+    ANSWER: keep every field in required 
+
+
+
+--------------------------------------------------------------------------
+AQ2. Which vision-LLM provider should I lock in?
+--------------------------------------------------------------------------
+    The ENTIRE pipeline is blocked until one working API key exists, so
+    this is the #1 thing to settle. All three below are strong at English
+    business-card reading and can return structured JSON in one call:
+      (a) OpenAI          (GPT-4o / GPT-4o-mini)
+      (b) Google Gemini   (2.0 Flash - cheapest, very fast)
+      (c) Anthropic Claude
+    Which one can you get an API key for the fastest? A personal/free key
+    is fine to start - we can move to an Antino billing account later.
+    My recommendation for speed + cost: (b) Gemini Flash, with the code
+    written so swapping providers is a small change.
+
+    ANSWER: use gemini model wich is best fit for this task and is fast
+
+
+
+--------------------------------------------------------------------------
+AQ3. What does "deployed" mean for the 2-day version?
+--------------------------------------------------------------------------
+    Browser camera only works over HTTPS or on localhost.
+      (a) FAST: runs on your laptop; you open it on your phone via a
+          tunnel (e.g. ngrok / cloudflared) that gives a temporary HTTPS
+          URL. Ready in 2 days. Good while you're the only user.
+      (b) FULL: hosted on an AWS instance with a real domain + SSL so any
+          sales rep can use it. Adds server, domain and SSL setup on top
+          of the app work - tight for 2 days.
+    Which do you want me to target now? (We can do (a) now, (b) later.)
+
+    ANSWER: for now use ngrok but in future the user will be around 5-10 where they will login using outlook
+
+
+
+--------------------------------------------------------------------------
+AQ4. How do you get the Excel file out of the app?
+--------------------------------------------------------------------------
+    The .xlsx lives on the machine running the Python backend.
+      (a) Add a "Download Excel" button in the app that hands you the
+          current master file any time.
+      (b) You just grab the file off disk yourself (fine if it runs on
+          your own laptop).
+    Also note: the master .xlsx must stay CLOSED in Excel while you
+    capture leads - if it's open, the append fails until you close it.
+    The app will show a clear error if that happens. Acceptable?
+
+    ANSWER:option B is fine
+
+
+
+--------------------------------------------------------------------------
+AQ5. About the 95-99% confidence highlight (your D5)
+--------------------------------------------------------------------------
+    A vision LLM does NOT give a true accuracy percentage like classic
+    OCR engines do. What I can do instead: ask the model to self-rate
+    each field 0-100 for how sure it is, then highlight any field below
+    your threshold (e.g. <95) in amber with a "please verify" hint.
+    It's a helpful guide, not a guaranteed accuracy figure. OK to go
+    with model self-reported confidence?
+
+    ANSWER: okay
+
+
+
+--------------------------------------------------------------------------
+AQ6. Blur / shake check (your B3)
+--------------------------------------------------------------------------
+    Plan: score the captured image sharpness; if it's below a tuned
+    threshold show "Image looks blurry - retake?" with BOTH a "Retake"
+    and a "Use anyway" button (so a readable-but-imperfect card is never
+    fully blocked). Confirm "Use anyway" should stay allowed.
+
+    ANSWER: no ask the user to re-take
+
+
+
+--------------------------------------------------------------------------
+AQ7. How aggressive should image cleanup be? (your B5)
+--------------------------------------------------------------------------
+      (a) LIGHT only: grayscale, auto-contrast, denoise, mild deskew.
+          Safe, basically always helps.
+      (b) LIGHT + HEAVY: also detect the card's edges and perspective-
+          crop to just the card. Better when it works, but can misfire
+          on busy backgrounds and hurt results.
+    My plan: do (b) but automatically fall back to (a) if edge detection
+    isn't confident. Good?
+
+    ANSWER: do A option
+
+
+
+--------------------------------------------------------------------------
+AQ8. App name & logo
+--------------------------------------------------------------------------
+    What should the app be called in the header / browser tab?
+    (e.g. "Antino Lead Capture", "Card2Lead", something else.)
+    Is the Antino logo available as an image file, or should I use a
+    clean text logo for now?
+
+    ANSWER: you can use CARD2LEAD for now
+
+
+
+--------------------------------------------------------------------------
+AQ9. Phone number formatting
+--------------------------------------------------------------------------
+    Store the phone number exactly as printed on the card, or normalize
+    it (e.g. "+91 98765 43210")? Default = store exactly as printed.
+
+    ANSWER: keep a same format for every time add a prefix of +91
+
+
+
+==========================================================================
+END OF QUESTIONS
+==========================================================================

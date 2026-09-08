@@ -1,0 +1,48 @@
+from groq import Groq
+
+client = Groq()
+completion = client.chat.completions.create(
+    model="qwen/qwen3.8-27b",
+    messages=[
+      {
+        "role": "user",
+        "content": [
+          {
+            "type": "text",
+            "text": "extract name, company name,mail address,phone number,title from this card in a strutured json\n"
+          },
+          {
+            "type": "image_url",
+            "image_url": {
+              "url": IMAGE_DATA_URL
+            }
+          }
+        ]
+      },
+      {
+        "role": "assistant",
+        "content": ""
+      },
+      {
+        "role": "user",
+        "content": ""
+      },
+      {
+        "role": "assistant",
+        "content": "```json\n{\n  \"name\": \"YOUR NAME\",\n  \"company_name\": \"COMPANY NAME\",\n  \"mail_address\": \"email address goes here\",\n  \"phone_number\": \"+00 123 456 789\",\n  \"title\": \"Your Position\"\n}\n```"
+      },
+      {
+        "role": "user",
+        "content": ""
+      }
+    ],
+    temperature=0.6,
+    max_completion_tokens=2048,
+    top_p=0.95,
+    reasoning_effort="default",
+    stream=True,
+    stop=None
+)
+
+for chunk in completion:
+    print(chunk.choices[0].delta.content or "", end="")

@@ -1,0 +1,568 @@
+# Backend Architecture and Requirements for the Event-Based Data Collection Application
+
+## 1. Objective
+
+I am planning to create a **dedicated backend for the application** instead of integrating it into the existing backend repository.
+
+The primary reason for this change is that the current approach uses Excel for storing application data, which is not ideal when multiple users are accessing and writing data concurrently. Instead, the application should use **Google Sheets as the primary data storage layer**, with a separate sheet created for each event.
+
+At the same time, I am planning to replace the current **Gemini-based implementation with Groq** for the LLM/API functionality. I have provided a `groq_reference.txt` file that contains the reference implementation and usage details that should be followed when integrating Groq into the project.
+
+The new backend should be designed to support approximately **10–30 users**, while maintaining proper authentication, authorization, event management, logging, and concurrent data handling.
+
+---
+
+# 2. Overall Application Concept
+
+The application may be used for **multiple events**, rather than being tied to a single event.
+
+An **admin user** should be responsible for managing these events and controlling which users can access each event.
+
+The high-level workflow should be:
+
+```text
+Admin
+  │
+  ├── Create / Select Event
+  │
+  ├── Assign Event Access to Users
+  │
+  ▼
+Unique Event Access Link
+  │
+  ▼
+Authorized User
+  │
+  ├── Login / Authentication
+  │
+  ├── Use Application
+  │
+  └── Add Data
+          │
+          ▼
+    Event-Specific Google Sheet
+          │
+          └── User Email + Data + Timestamp
+```
+
+Each event should have its own isolated data sheet so that information from different events does not get mixed together.
+
+---
+
+# 3. Dedicated Backend
+
+The application should have its own backend rather than depending on the existing backend.
+
+The backend should be responsible for:
+
+* User authentication.
+* JWT-based session/authentication management.
+* Admin authentication.
+* Event creation and management.
+* User/event assignment.
+* Access-control enforcement.
+* Generating/managing event-specific access links.
+* Receiving application data.
+* Writing data to Google Sheets.
+* Recording which user submitted each entry.
+* Logging important application activities.
+* Integrating the Groq API.
+* Handling API errors and failures.
+* Managing concurrent requests from multiple users.
+
+The backend should act as the central layer between the frontend, Groq, Google Sheets, and authentication system.
+
+---
+
+# 4. Google Sheets as the Data Storage Layer
+
+Instead of using Excel files, Google Sheets should be used for storing the collected application data.
+
+The reason for this change is that Excel files are not an ideal backend storage mechanism when multiple users may be submitting data simultaneously.
+
+Google Sheets provides a more practical shared-storage mechanism for this particular use case.
+
+### Event-Based Sheet Structure
+
+Every time a new event is created, a corresponding Google Sheet should be created.
+
+For example:
+
+```text
+Events
+│
+├── Event_A
+│     └── Google Sheet
+│
+├── Event_B
+│     └── Google Sheet
+│
+└── Event_C
+      └── Google Sheet
+```
+
+Each event should therefore have its own independent data storage.
+
+---
+
+# 5. User Tracking in Google Sheets
+
+Every record written to the event's Google Sheet should contain information identifying which user submitted it.
+
+The user's **email address** can be stored along with the submitted data.
+
+For example:
+
+| Timestamp | User Email                                    | Event   | Data | Status |
+| --------- | --------------------------------------------- | ------- | ---- | ------ |
+| 10:32:14  | [user1@company.com](mailto:user1@company.com) | Event A | ...  | Added  |
+| 10:34:51  | [user2@company.com](mailto:user2@company.com) | Event A | ...  | Added  |
+| 10:38:09  | [user1@company.com](mailto:user1@company.com) | Event A | ...  | Added  |
+
+This makes it easy to determine:
+
+* Who added a particular record.
+* When it was added.
+* Which event it belongs to.
+* What data was submitted.
+
+The email should come from the authenticated user session rather than being manually entered by the user.
+
+---
+
+# 6. Admin Functionality
+
+The system should have a dedicated **admin user/role**.
+
+The admin should be able to:
+
+### Event Management
+
+* Create a new event.
+* View existing events.
+* Select an active event.
+* Update event information.
+* Manage event-specific access.
+
+The application should not have event names hardcoded into the code because the same application may be reused for multiple events.
+
+Instead:
+
+```text
+Admin Dashboard
+      │
+      ├── Create Event
+      │
+      ├── View Events
+      │
+      └── Manage Users
+```
+
+---
+
+# 7. User Assignment and Access Control
+
+The admin should be able to assign an event/application link to specific users through email.
+
+For example:
+
+```text
+Admin
+  │
+  ▼
+Select Event
+  │
+  ▼
+Enter User Email
+  │
+  ▼
+Assign Access
+  │
+  ▼
+Generate / Send Event Link
+```
+
+Only users who have been explicitly assigned access should be able to use that event link.
+
+Simply having the URL should **not** be enough to access the application.
+
+The backend should validate:
+
+1. User identity.
+2. Authentication status.
+3. Event associated with the link.
+4. Whether the user has permission to access that event.
+5. Whether the access is still valid.
+
+---
+
+# 8. JWT Authentication
+
+The application should use **JWT-based authentication**.
+
+The expected flow would be:
+
+```text
+User Login
+    │
+    ▼
+Backend validates credentials
+    │
+    ▼
+JWT generated
+    │
+    ▼
+JWT provided to client
+    │
+    ▼
+Client sends JWT with protected requests
+    │
+    ▼
+Backend validates JWT
+    │
+    ▼
+Request authorized / rejected
+```
+
+JWT authentication should be used for protected APIs such as:
+
+* Event access.
+* Data submission.
+* User information.
+* Event information.
+* Admin operations.
+
+The user's identity should be derived from the authenticated session/token wherever possible.
+
+---
+
+# 9. Event-Specific Access
+
+The access mechanism should ensure that an employee cannot simply modify an event identifier in the URL and gain access to another event.
+
+For example:
+
+```text
+/event/event-A
+```
+
+should not allow a user assigned only to Event B to access Event A.
+
+The backend must perform authorization checks server-side.
+
+Conceptually:
+
+```text
+Authenticated User
+        │
+        ▼
+Check Event
+        │
+        ▼
+Check User Assignment
+        │
+   ┌────┴────┐
+   │         │
+Allowed    Denied
+   │         │
+   ▼         ▼
+Access     Reject
+```
+
+---
+
+# 10. Groq Integration
+
+The current Gemini implementation should be replaced with **Groq**.
+
+The provided:
+
+```text
+groq_reference.txt
+```
+
+should be used as the reference for implementing the Groq integration.
+
+The existing application functionality should remain unchanged from a user perspective.
+
+The main change should be the underlying LLM/API provider:
+
+```text
+Current:
+
+Application
+     ↓
+Gemini API
+     ↓
+Generated Output
+```
+
+New:
+
+```text
+Application
+     ↓
+Backend
+     ↓
+Groq API
+     ↓
+Generated Output
+```
+
+The implementation should avoid unnecessary changes to the existing processing logic. Wherever possible, the current prompts, output structure, validation, and application behavior should be retained while replacing the Gemini-specific API integration with Groq.
+
+---
+
+# 11. Logging System
+
+A proper application-level logging system should be introduced.
+
+The system should record important events such as:
+
+* User login.
+* Failed login attempts.
+* Logout.
+* Event creation.
+* User assignment.
+* Access attempts.
+* Data submission.
+* Google Sheets write operations.
+* Groq API requests/failures.
+* Authentication failures.
+* Authorization failures.
+* Unexpected application errors.
+
+Logs should make it possible to troubleshoot problems and understand what happened during an event.
+
+For example:
+
+```text
+2026-09-07 15:21
+USER_LOGIN
+user=user@example.com
+status=success
+
+2026-09-07 15:23
+DATA_SUBMISSION
+user=user@example.com
+event=Event_A
+status=success
+```
+
+Sensitive information such as passwords, JWT secrets, or API keys should never be written to logs.
+
+---
+
+# 12. Concurrent User Handling
+
+The expected number of users is approximately **10–30 users**.
+
+The backend should therefore be designed to safely handle multiple users making requests simultaneously.
+
+Particular attention should be given to:
+
+* Concurrent Google Sheets writes.
+* API request handling.
+* Authentication/session management.
+* Groq API rate limits.
+* Error handling.
+* Duplicate submissions.
+* Request timeouts.
+* Retry behavior.
+
+The system does not need to be unnecessarily over-engineered for massive traffic, but it should comfortably support the expected 10–30-user workload.
+
+---
+
+# 13. Google Sheets Write Reliability
+
+Because Google Sheets will act as the storage layer, the backend should not assume that every write will succeed immediately.
+
+The implementation should account for:
+
+```text
+User Submission
+      ↓
+Backend
+      ↓
+Validate Data
+      ↓
+Write to Google Sheet
+      │
+      ├── Success → Return Success
+      │
+      └── Failure
+             ↓
+        Retry / Error Handling
+             ↓
+        Return Appropriate Status
+```
+
+The backend should prevent situations where the frontend reports a successful submission even though the data was never actually written.
+
+---
+
+# 14. Suggested Backend Components
+
+A clean backend structure could conceptually be divided into:
+
+```text
+backend/
+│
+├── auth/
+│   ├── authentication
+│   ├── JWT handling
+│   └── authorization
+│
+├── users/
+│   ├── user management
+│   └── event assignments
+│
+├── events/
+│   ├── event creation
+│   ├── event management
+│   └── event access
+│
+├── sheets/
+│   ├── Google Sheets integration
+│   ├── sheet creation
+│   └── data writing
+│
+├── groq/
+│   ├── Groq client
+│   ├── prompt handling
+│   └── response processing
+│
+├── logging/
+│   └── application logs
+│
+├── middleware/
+│   ├── authentication
+│   ├── authorization
+│   └── error handling
+│
+├── config/
+│   └── environment configuration
+│
+└── main application
+```
+
+The exact structure should be determined after reviewing the existing project/repository conventions.
+
+---
+
+# 15. Security Considerations
+
+Since users will access the application through an exposed URL, security should be considered from the beginning.
+
+The implementation should include:
+
+* JWT authentication.
+* Role-based authorization.
+* Event-level access control.
+* Secure password handling.
+* Environment variables for secrets.
+* No API keys committed to the repository.
+* HTTPS in production.
+* Input validation.
+* API error handling.
+* Rate limiting where appropriate.
+* Secure CORS configuration.
+* Audit/application logging.
+* Protection against unauthorized event access.
+
+---
+
+# 16. Potential Improvements Based on the Existing Repository
+
+The existing repository can be used as a reference for identifying additional functionality that should be carried into the new implementation.
+
+In particular, review the existing project for:
+
+* Existing user-management functionality.
+* Existing event/lead relationships.
+* Existing validation logic.
+* Existing application workflows.
+* Existing API patterns.
+* Existing error handling.
+* Existing data fields.
+* Existing business rules.
+
+Any useful functionality should be incorporated where relevant rather than recreated unnecessarily.
+
+The goal is to **take useful concepts from the existing repository while building a cleaner standalone backend for the new architecture**.
+
+---
+
+# 17. Recommended Overall Architecture
+
+The complete system can be represented as:
+
+```text
+                         ┌─────────────┐
+                         │    Admin    │
+                         └──────┬──────┘
+                                │
+                    Create / Manage Events
+                                │
+                                ▼
+                         ┌─────────────┐
+                         │   Backend   │
+                         └──────┬──────┘
+                                │
+              ┌─────────────────┼─────────────────┐
+              │                 │                 │
+              ▼                 ▼                 ▼
+        Authentication     Event Access       User Mgmt
+              │                 │                 │
+              └─────────────────┼─────────────────┘
+                                │
+                         ┌──────▼──────┐
+                         │ Authorized  │
+                         │    User     │
+                         └──────┬──────┘
+                                │
+                                ▼
+                         Application Usage
+                                │
+                 ┌──────────────┴──────────────┐
+                 │                             │
+                 ▼                             ▼
+             Groq API                    Google Sheets
+                 │                             │
+                 ▼                             ▼
+          AI-generated output          Event-specific data
+                                               │
+                                               ▼
+                                        User Email +
+                                        Timestamp +
+                                        Submitted Data
+```
+
+---
+
+# 18. Final Objective
+
+The final system should provide a **standalone, event-based application backend** that is capable of supporting approximately 10–30 users concurrently.
+
+The key requirements are:
+
+1. Build a dedicated backend.
+2. Replace Gemini with Groq using the provided `groq_reference.txt` as the implementation reference.
+3. Use Google Sheets instead of Excel for concurrent data storage.
+4. Create a separate Google Sheet for every event.
+5. Maintain event-specific data isolation.
+6. Provide an admin user/role.
+7. Allow the admin to create and manage events.
+8. Allow the admin to assign specific users to specific events.
+9. Provide event-specific access links.
+10. Ensure only assigned users can access their respective event.
+11. Implement JWT authentication.
+12. Store the authenticated user's email with submitted data.
+13. Implement application and audit logging.
+14. Handle concurrent requests from approximately 10–30 users.
+15. Provide reliable Google Sheets write operations and error handling.
+16. Reuse relevant functionality and business logic from the existing repository where appropriate.
+17. Keep the implementation clean, maintainable, secure, and deployment-ready.
+
+The overall goal is to move from a **file-based, single/multi- user Excel workflow** to a **proper backend-driven, authenticated, event-based application with Google Sheets storage and Groq-powered AI processing**, while keeping the existing application's core functionality intact.
