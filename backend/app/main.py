@@ -3,23 +3,38 @@
 from __future__ import annotations
 
 import logging
+import os
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 from app.access.router import me_router, router as access_router
 from app.api.health import router as health_router
 from app.assignees.router import router as assignees_router
 from app.auth.router import router as auth_router
 from app.core.config import get_settings
+from app.core.logging import log_event, setup_logging
+from app.db.base import init_db
 from app.events.router import router as events_router
 from app.leads.router import router as leads_router
 from app.scan.router import router as scan_router
-from app.core.logging import log_event, setup_logging
-from app.db.base import init_db
 
 log = logging.getLogger("app")
+
+
+def _frontend_dist() -> Path | None:
+    candidates = [
+        os.environ.get("FRONTEND_DIST", ""),
+        Path(__file__).resolve().parents[2] / "frontend" / "dist",
+        "/app/frontend_dist",
+    ]
+    for c in candidates:
+        if c and Path(c).is_dir():
+            return Path(c)
+    return None
 
 
 @asynccontextmanager
@@ -61,6 +76,14 @@ def create_app() -> FastAPI:
     app.include_router(leads_router, prefix="/events", tags=["leads"])
     app.include_router(me_router, prefix="/me", tags=["me"])
     app.include_router(assignees_router, prefix="/assignees", tags=["assignees"])
+
+    # Serve the built React app from the same origin (mounted LAST so it never
+    # shadows an API route). Absent in a backend-only / dev run.
+    dist = _frontend_dist()
+    if dist is not None:
+        app.mount("/", StaticFiles(directory=dist, html=True), name="spa")
+        log.info("serving frontend from %s", dist)
+
     return app
 
 

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Iterator
+from pathlib import Path
 
 from sqlalchemy.pool import StaticPool
 from sqlmodel import Session, SQLModel, create_engine
@@ -12,6 +13,12 @@ from app.core.config import get_settings
 _url = get_settings().database_url
 _is_sqlite = _url.startswith("sqlite")
 _is_memory = _url in ("sqlite://", "sqlite:///:memory:")
+
+if _is_sqlite and not _is_memory:
+    # make sure the folder for the .db file exists
+    _path = _url.split("sqlite:///", 1)[-1]
+    if _path:
+        Path(_path).expanduser().resolve().parent.mkdir(parents=True, exist_ok=True)
 
 _kwargs: dict = {"echo": False}
 if _is_sqlite:
