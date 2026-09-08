@@ -9,8 +9,10 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.health import router as health_router
+from app.assignees.router import router as assignees_router
 from app.auth.router import router as auth_router
 from app.core.config import get_settings
+from app.events.router import router as events_router
 from app.core.logging import log_event, setup_logging
 from app.db.base import init_db
 
@@ -26,9 +28,11 @@ async def lifespan(app: FastAPI):
 
     init_db()
 
+    from app.assignees.service import seed_assignees
     from app.auth.service import seed_admin
 
     seed_admin()
+    seed_assignees()
     log_event("APP_START", env=settings.app_env)
     yield
     log_event("APP_STOP")
@@ -48,6 +52,8 @@ def create_app() -> FastAPI:
 
     app.include_router(health_router)
     app.include_router(auth_router, prefix="/auth", tags=["auth"])
+    app.include_router(events_router, prefix="/events", tags=["events"])
+    app.include_router(assignees_router, prefix="/assignees", tags=["assignees"])
     return app
 
 

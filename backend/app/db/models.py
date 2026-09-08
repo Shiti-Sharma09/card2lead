@@ -2,12 +2,13 @@
 
 Phase 0: AuditLog
 Phase 1: User
-Later phases add Event, EventAccess, Assignee, IdempotencyKey.
+Phase 2: Event, Assignee
+Later phases add EventAccess, IdempotencyKey.
 """
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 
 from sqlmodel import Field, SQLModel
 
@@ -27,6 +28,37 @@ class User(SQLModel, table=True):
     created_at: datetime = Field(default_factory=_utcnow)
     # bumped whenever the password changes; tokens issued before this are rejected
     password_changed_at: datetime = Field(default_factory=_utcnow)
+
+
+class Event(SQLModel, table=True):
+    __tablename__ = "events"
+
+    id: int | None = Field(default=None, primary_key=True)
+    name: str = Field(unique=True, index=True)
+    slug: str = Field(unique=True, index=True)
+    description: str | None = None
+    location: str | None = None
+    organizer: str | None = None
+    start_date: date | None = None
+    end_date: date | None = None
+    is_active: bool = Field(default=True)
+    # the tab we created in the Google Sheet for this event
+    google_tab_id: int | None = Field(default=None)
+    google_tab_name: str | None = Field(default=None)
+    created_at: datetime = Field(default_factory=_utcnow)
+    created_by: str | None = Field(default=None)
+
+
+class Assignee(SQLModel, table=True):
+    """A name in the "Assigned To" dropdown. Admin-managed."""
+
+    __tablename__ = "assignees"
+
+    id: int | None = Field(default=None, primary_key=True)
+    name: str = Field(unique=True, index=True)
+    is_active: bool = Field(default=True)  # soft-remove: hidden from the dropdown
+    created_at: datetime = Field(default_factory=_utcnow)
+    created_by: str | None = Field(default=None)
 
 
 class AuditLog(SQLModel, table=True):
