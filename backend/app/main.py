@@ -8,6 +8,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.access.router import me_router, router as access_router
 from app.api.health import router as health_router
 from app.assignees.router import router as assignees_router
 from app.auth.router import router as auth_router
@@ -53,6 +54,8 @@ def create_app() -> FastAPI:
     app.include_router(health_router)
     app.include_router(auth_router, prefix="/auth", tags=["auth"])
     app.include_router(events_router, prefix="/events", tags=["events"])
+    app.include_router(access_router, prefix="/events", tags=["access"])
+    app.include_router(me_router, prefix="/me", tags=["me"])
     app.include_router(assignees_router, prefix="/assignees", tags=["assignees"])
     return app
 

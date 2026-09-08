@@ -5,7 +5,8 @@ from __future__ import annotations
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlmodel import Session
 
-from app.auth.deps import require_admin
+from app.access.service import list_accessible_events, user_can_access_event
+from app.auth.deps import get_current_user, require_admin
 from app.db.base import get_session
 from app.db.models import Event, User
 from app.events.schemas import EventCreate, EventOut, EventUpdate
@@ -14,7 +15,6 @@ from app.events.service import (
     EventNotFoundError,
     create_event,
     get_event,
-    list_events,
     update_event,
 )
 from app.sheets.client import SheetsError
@@ -61,22 +61,29 @@ def create(
 
 @router.get("", response_model=list[EventOut])
 def list_(
-    admin: User = Depends(require_admin),
+    user: User = Depends(get_current_user),
     session: Session = Depends(get_session),
 ) -> list[EventOut]:
-    return [_out(e) for e in list_events(session)]
+    # admin -> all events; other users -> only active events they're assigned to
+    return [_out(e) for e in list_accessible_events(session, user)]
 
 
 @router.get("/{event_id}", response_model=EventOut)
 def detail(
     event_id: int,
-    admin: User = Depends(require_admin),
+    user: User = Depends(get_current_user),
     session: Session = Depends(get_session),
 ) -> EventOut:
     try:
-        return _out(get_event(session, event_id))
+        event = get_event(session, event_id)
     except EventNotFoundError:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Event not found.")
+    if not user_can_access_event(session, user, event_id):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You don't have access to this event.",
+        )
+    return _out(event)
 
 
 @router.patch("/{event_id}", response_model=EventOut)

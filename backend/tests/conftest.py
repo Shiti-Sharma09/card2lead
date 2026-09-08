@@ -47,8 +47,13 @@ def admin_token(client) -> str:
     return r.json()["access_token"]
 
 
-def new_user_token(client) -> str:
+def new_user(client) -> tuple[str, str]:
+    """Register a fresh user; return (email, token)."""
     email = f"u-{uuid.uuid4().hex[:10]}@referral-card-qa.com"
     r = client.post("/auth/register", json={"email": email, "password": "secret123"})
     assert r.status_code == 200, r.text
-    return r.json()["access_token"]
+    return email, r.json()["access_token"]
+
+
+def new_user_token(client) -> str:
+    return new_user(client)[1]

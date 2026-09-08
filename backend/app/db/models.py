@@ -3,13 +3,15 @@
 Phase 0: AuditLog
 Phase 1: User
 Phase 2: Event, Assignee
-Later phases add EventAccess, IdempotencyKey.
+Phase 3: EventAccess
+Later phases add IdempotencyKey.
 """
 
 from __future__ import annotations
 
 from datetime import date, datetime, timezone
 
+from sqlalchemy import UniqueConstraint
 from sqlmodel import Field, SQLModel
 
 
@@ -59,6 +61,19 @@ class Assignee(SQLModel, table=True):
     is_active: bool = Field(default=True)  # soft-remove: hidden from the dropdown
     created_at: datetime = Field(default_factory=_utcnow)
     created_by: str | None = Field(default=None)
+
+
+class EventAccess(SQLModel, table=True):
+    """Which users may use which event. One row = one grant. Delete = revoke."""
+
+    __tablename__ = "event_access"
+    __table_args__ = (UniqueConstraint("user_id", "event_id", name="uq_user_event"),)
+
+    id: int | None = Field(default=None, primary_key=True)
+    user_id: int = Field(foreign_key="users.id", index=True)
+    event_id: int = Field(foreign_key="events.id", index=True)
+    granted_by: str | None = Field(default=None)
+    granted_at: datetime = Field(default_factory=_utcnow)
 
 
 class AuditLog(SQLModel, table=True):

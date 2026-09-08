@@ -7,9 +7,13 @@ def _name() -> str:
     return f"Event {uuid.uuid4().hex[:8]}"
 
 
-def test_user_cannot_create_or_list_events(client):
+def test_user_cannot_create_events(client):
     tok = new_user_token(client)
-    assert client.get("/events", headers=auth_header(tok)).status_code == 403
+    # a non-admin may call GET /events (Phase 3: sees only assigned events)...
+    r = client.get("/events", headers=auth_header(tok))
+    assert r.status_code == 200
+    assert r.json() == []
+    # ...but cannot create one
     assert client.post(
         "/events", json={"name": _name()}, headers=auth_header(tok)
     ).status_code == 403
