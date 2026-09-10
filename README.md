@@ -14,8 +14,12 @@ can access each one, and manages the "Assigned To" name list.
   one URL).
 - **Plan:** [`plan.md`](plan.md). Rationale: [`suggestions.md`](suggestions.md).
 - **Deploy:** [`DEPLOY.md`](DEPLOY.md).
-- **API examples:** [`card2lead.postman_collection.json`](card2lead.postman_collection.json).
+- **API examples:** [`card2lead.postman_collection.json`](card2lead.postman_collection.json)
+  · live docs at `/docs` when the server is running.
 - **First prototype (frozen, reference only):** [`intial_stage/`](intial_stage/).
+
+**Status:** all seven build phases are complete — backend, frontend and the
+one-container image. Deploy per [`DEPLOY.md`](DEPLOY.md).
 
 ## The flow
 
@@ -31,6 +35,29 @@ register ──▶ admin grants you event access ──▶ log in ──▶ pick
                           Timestamp │ User Email │ Event │ Name │ Company │
                           Title │ Email │ Phone │ Notes │ Assigned To
 ```
+
+## API
+
+| Method &amp; path | Who | What |
+|---|---|---|
+| `GET /health` | anyone | liveness + whether Groq / Sheets are configured |
+| `POST /auth/register` | anyone | self-serve account (email + password ≥ 8) → JWT |
+| `POST /auth/login` | anyone | → JWT (7-day) |
+| `GET /auth/me` | logged in | current user |
+| `POST /auth/forgot-password` · `/reset-password` | anyone | stubbed until SMTP |
+| `POST /events` | admin | create an event **and** its Google Sheet tab |
+| `GET /events` · `GET /events/{id}` | admin: all · user: assigned only | list / detail |
+| `PATCH /events/{id}` | admin | edit description / location / organizer / dates / active |
+| `GET /events/{id}/access` | admin | who can use this event |
+| `POST /events/{id}/access` `{email}` | admin | grant access (user must have registered) |
+| `DELETE /events/{id}/access/{userId}` | admin | revoke |
+| `GET /me/events` | logged in | events this user may use (the picker) |
+| `GET /assignees` | logged in | active names for the "Assigned To" dropdown |
+| `GET /assignees?all=true` · `POST /assignees` · `DELETE /assignees/{id}` | admin | manage the list (remove is soft) |
+| `POST /events/{id}/scan` | event access | multipart `image` → `{name, company, title, email, phone}`; not saved |
+| `POST /events/{id}/leads` | event access | reviewed fields + `assigned_to` + `request_id` → one Sheet row; a repeated `request_id` is a no-op |
+
+All non-auth routes need `Authorization: Bearer <token>`.
 
 ## Run it locally
 
