@@ -26,9 +26,15 @@ class Settings(BaseSettings):
     groq_model: str = "qwen/qwen3.8-27b"
     groq_max_per_min: int = 25
     groq_max_per_day: int = 1000
+    groq_timeout_s: int = 30
 
     google_service_account_file: str = "./secrets/gsa.json"
     google_sheet_id: str = ""
+
+    max_upload_mb: int = 12
+
+    # comma-separated names to seed the "Assigned To" list on first boot
+    seed_assignees: str = "NITISH,HARSHAD"
 
     timezone: str = "Asia/Kolkata"
 
@@ -57,6 +63,14 @@ class Settings(BaseSettings):
     @property
     def groq_mock_mode(self) -> bool:
         return not self.groq_api_key
+
+    @property
+    def sheets_configured(self) -> bool:
+        return bool(self.google_sheet_id)
+
+    @property
+    def seed_assignee_names(self) -> list[str]:
+        return [n.strip() for n in self.seed_assignees.split(",") if n.strip()]
 
     def startup_warnings(self) -> list[str]:
         """Non-fatal config problems worth logging at boot."""

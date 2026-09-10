@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+import uuid
 
 os.environ.update(
     APP_ENV="test",
@@ -12,6 +13,8 @@ os.environ.update(
     ADMIN_EMAIL="admin@referral-card-qa.com",
     ADMIN_PASSWORD="AdminPass1",
     GROQ_API_KEY="",
+    GOOGLE_SHEET_ID="",  # Sheets disabled in tests -> no real Google calls
+    SEED_ASSIGNEES="NITISH,HARSHAD",
     CORS_ORIGINS="*",
 )
 
@@ -24,8 +27,33 @@ ADMIN_PASSWORD = os.environ["ADMIN_PASSWORD"]
 
 @pytest.fixture(scope="session")
 def client():
-    # importing app triggers lifespan (init_db + seed_admin) via the context mgr
+    # importing app triggers lifespan (init_db + seed_admin + seed_assignees)
     from app.main import app
 
     with TestClient(app) as c:
         yield c
+
+
+# --- helpers ---------------------------------------------------------------
+def auth_header(token: str) -> dict:
+    return {"Authorization": f"Bearer {token}"}
+
+
+def admin_token(client) -> str:
+    r = client.post(
+        "/auth/login", json={"email": ADMIN_EMAIL, "password": ADMIN_PASSWORD}
+    )
+    assert r.status_code == 200, r.text
+    return r.json()["access_token"]
+
+
+def new_user(client) -> tuple[str, str]:
+    """Register a fresh user; return (email, token)."""
+    email = f"u-{uuid.uuid4().hex[:10]}@referral-card-qa.com"
+    r = client.post("/auth/register", json={"email": email, "password": "secret123"})
+    assert r.status_code == 200, r.text
+    return email, r.json()["access_token"]
+
+
+def new_user_token(client) -> str:
+    return new_user(client)[1]

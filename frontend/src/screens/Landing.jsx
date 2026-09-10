@@ -1,11 +1,20 @@
 import Logo from '../components/Logo'
 
-export default function Landing({ onCamera, onUpload, mockMode }) {
+export default function Landing({ event, onCamera, onUpload, onChangeEvent }) {
   return (
     <div className="mx-auto flex min-h-full max-w-md flex-col px-5 pb-10 pt-14">
-      <Logo className="text-xl" />
+      <div className="flex items-center justify-between">
+        <Logo className="text-xl" />
+        <button className="text-sm text-slate-500" onClick={onChangeEvent}>
+          Change event
+        </button>
+      </div>
 
-      <div className="mt-16 flex-1">
+      <div className="mt-3 inline-flex w-fit rounded-full bg-brand/10 px-3 py-1 text-xs font-semibold text-brand">
+        {event.name}
+      </div>
+
+      <div className="mt-14 flex-1">
         <h1 className="text-2xl font-bold leading-snug">
           Capture a business card,
           <br />
@@ -13,7 +22,8 @@ export default function Landing({ onCamera, onUpload, mockMode }) {
         </h1>
         <p className="mt-3 text-slate-500">
           Point your camera at the card. We read the details, you review and correct
-          them, then it&rsquo;s saved to the sheet.
+          them, then it&rsquo;s saved under{' '}
+          <span className="font-medium text-ink">{event.name}</span>.
         </p>
       </div>
 
@@ -33,12 +43,6 @@ export default function Landing({ onCamera, onUpload, mockMode }) {
           />
         </label>
       </div>
-
-      {mockMode && (
-        <p className="mt-5 rounded-lg bg-amber-50 px-3 py-2 text-center text-xs text-amber-700">
-          Demo mode &mdash; no OCR key set yet, so sample data is shown after capture.
-        </p>
-      )}
     </div>
   )
 }
