@@ -1,11 +1,21 @@
-# Local development only. Render builds from the root Dockerfile directly.
+# Local run of the full image (frontend + API on one port), like Render does.
+#   docker compose up --build   ->   http://localhost:8000
+#
+# For backend-only iteration with autoreload, run uvicorn directly instead:
+#   cd backend && uvicorn app.main:app --reload --port 8000
 services:
-  api:
+  app:
     build: .
     ports:
       - "8000:8000"
     env_file:
       - backend/.env
     volumes:
-      - ./backend:/app
-    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+      - ./backend/secrets:/app/secrets:ro
+      - card2lead-data:/app/data
+    environment:
+      # keep SQLite on the named volume so it survives `docker compose down`
+      DATABASE_URL: sqlite:///./data/app.db
+
+volumes:
+  card2lead-data:

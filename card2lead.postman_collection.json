@@ -1,0 +1,191 @@
+{
+  "info": {
+    "name": "card2lead",
+    "description": "Event-based business-card lead capture. Set {{baseUrl}} (default http://localhost:8000). Run 'Auth / Login' first — its test script stores {{token}}, which every other request uses as a Bearer token.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:8000" },
+    { "key": "token", "value": "" },
+    { "key": "eventId", "value": "1" },
+    { "key": "userId", "value": "2" }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }]
+  },
+  "item": [
+    {
+      "name": "Meta",
+      "item": [
+        {
+          "name": "Health",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "url": "{{baseUrl}}/health"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Register",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user1@example.com\",\n  \"password\": \"secret12345\"\n}"
+            },
+            "url": "{{baseUrl}}/auth/register"
+          }
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const d = pm.response.json();",
+                  "if (d.access_token) pm.collectionVariables.set('token', d.access_token);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"card.admin@gmail.com\",\n  \"password\": \"Test@2003\"\n}"
+            },
+            "url": "{{baseUrl}}/auth/login"
+          }
+        },
+        { "name": "Me", "request": { "method": "GET", "url": "{{baseUrl}}/auth/me" } },
+        {
+          "name": "Forgot password (stub)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"user1@example.com\"\n}" },
+            "url": "{{baseUrl}}/auth/forgot-password"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Events (admin)",
+      "item": [
+        {
+          "name": "Create event",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const d = pm.response.json();",
+                  "if (d.id) pm.collectionVariables.set('eventId', d.id);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Seamless Dubai 2026\",\n  \"description\": \"booth 12\",\n  \"location\": \"Dubai\",\n  \"organizer\": \"Antino\",\n  \"start_date\": \"2026-10-01\",\n  \"end_date\": \"2026-10-03\"\n}"
+            },
+            "url": "{{baseUrl}}/events"
+          }
+        },
+        { "name": "List events", "request": { "method": "GET", "url": "{{baseUrl}}/events" } },
+        { "name": "Get event", "request": { "method": "GET", "url": "{{baseUrl}}/events/{{eventId}}" } },
+        {
+          "name": "Update event",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"description\": \"moved to booth 20\",\n  \"is_active\": true\n}" },
+            "url": "{{baseUrl}}/events/{{eventId}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Access (admin)",
+      "item": [
+        {
+          "name": "Grant access",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"user1@example.com\"\n}" },
+            "url": "{{baseUrl}}/events/{{eventId}}/access"
+          }
+        },
+        { "name": "List access", "request": { "method": "GET", "url": "{{baseUrl}}/events/{{eventId}}/access" } },
+        {
+          "name": "Revoke access",
+          "request": { "method": "DELETE", "url": "{{baseUrl}}/events/{{eventId}}/access/{{userId}}" }
+        }
+      ]
+    },
+    {
+      "name": "Assignees",
+      "item": [
+        { "name": "List (active)", "request": { "method": "GET", "url": "{{baseUrl}}/assignees" } },
+        { "name": "List all (admin)", "request": { "method": "GET", "url": "{{baseUrl}}/assignees?all=true" } },
+        {
+          "name": "Add (admin)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"PRIYA\"\n}" },
+            "url": "{{baseUrl}}/assignees"
+          }
+        },
+        { "name": "Remove (admin)", "request": { "method": "DELETE", "url": "{{baseUrl}}/assignees/3" } }
+      ]
+    },
+    {
+      "name": "Capture",
+      "item": [
+        { "name": "My events (dropdown)", "request": { "method": "GET", "url": "{{baseUrl}}/me/events" } },
+        {
+          "name": "Scan a card",
+          "request": {
+            "method": "POST",
+            "body": {
+              "mode": "formdata",
+              "formdata": [{ "key": "image", "type": "file", "src": [] }]
+            },
+            "url": "{{baseUrl}}/events/{{eventId}}/scan"
+          }
+        },
+        {
+          "name": "Save lead",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Meera Iyer\",\n  \"company\": \"Cobalt Labs\",\n  \"title\": \"CTO\",\n  \"email\": \"meera@cobaltlabs.com\",\n  \"phone\": \"+91 98765 43210\",\n  \"notes\": \"met at booth 4\",\n  \"assigned_to\": \"NITISH\",\n  \"request_id\": \"{{$guid}}\"\n}"
+            },
+            "url": "{{baseUrl}}/events/{{eventId}}/leads"
+          }
+        }
+      ]
+    }
+  ]
+}

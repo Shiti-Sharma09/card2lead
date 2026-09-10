@@ -2,7 +2,6 @@ export default function Field({
   label,
   value,
   onChange,
-  flag = false,
   hint,
   hintTone = 'amber',
   type = 'text',
@@ -12,14 +11,9 @@ export default function Field({
   const hintColor = hintTone === 'error' ? 'text-rose-600' : 'text-amber-600'
   return (
     <div>
-      <label className="field-label">
-        {label}
-        {flag && (
-          <span className="ml-2 text-xs font-semibold text-amber-600">please verify</span>
-        )}
-      </label>
+      <label className="field-label">{label}</label>
       <input
-        className={`field-input ${flag ? 'field-input--flag' : ''}`}
+        className="field-input"
         value={value}
         type={type}
         inputMode={inputMode}
