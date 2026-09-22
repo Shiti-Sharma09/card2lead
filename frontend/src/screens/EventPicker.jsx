@@ -1,13 +1,28 @@
 import Logo from '../components/Logo'
 
-export default function EventPicker({ events, loading, onPick, onLogout, onRetry }) {
+export default function EventPicker({
+  events,
+  loading,
+  onPick,
+  onLogout,
+  onRetry,
+  isAdmin,
+  onAdmin,
+}) {
   return (
     <div className="mx-auto flex min-h-full max-w-md flex-col px-5 pb-10 pt-16">
       <div className="flex items-center justify-between">
         <Logo className="text-lg" />
-        <button className="text-sm text-slate-500" onClick={onLogout}>
-          Log out
-        </button>
+        <div className="flex items-center gap-4">
+          {isAdmin && (
+            <button className="text-sm font-medium text-brand" onClick={onAdmin}>
+              Admin
+            </button>
+          )}
+          <button className="text-sm text-slate-500" onClick={onLogout}>
+            Log out
+          </button>
+        </div>
       </div>
 
       <h1 className="mt-12 text-2xl font-bold">Choose an event</h1>
@@ -20,12 +35,24 @@ export default function EventPicker({ events, loading, onPick, onLogout, onRetry
 
         {!loading && events.length === 0 && (
           <div className="rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-800">
-            You don&rsquo;t have access to any event yet. Ask your admin to add you,
-            then{' '}
-            <button className="font-semibold underline" onClick={onRetry}>
-              refresh
-            </button>
-            .
+            {isAdmin ? (
+              <>
+                No events exist yet.{' '}
+                <button className="font-semibold underline" onClick={onAdmin}>
+                  Create one
+                </button>{' '}
+                in Admin.
+              </>
+            ) : (
+              <>
+                You don&rsquo;t have access to any event yet. Ask your admin to add
+                you, then{' '}
+                <button className="font-semibold underline" onClick={onRetry}>
+                  refresh
+                </button>
+                .
+              </>
+            )}
           </div>
         )}
 
