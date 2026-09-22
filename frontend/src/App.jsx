@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import Login from './screens/Login'
 import EventPicker from './screens/EventPicker'
+import AdminHome from './screens/admin/AdminHome'
 import Landing from './screens/Landing'
 import Camera from './screens/Camera'
 import Review from './screens/Review'
@@ -21,9 +22,10 @@ const newRequestId = () =>
   globalThis.crypto?.randomUUID?.() ??
   `req-${Date.now()}-${Math.random().toString(16).slice(2)}`
 
-// screen: booting | login | events | landing | camera | processing | review | success
+// screen: booting | login | events | admin | landing | camera | processing | review | success
 export default function App() {
   const [screen, setScreen] = useState('booting')
+  const [me, setMe] = useState(null)
   const [events, setEvents] = useState([])
   const [eventsLoading, setEventsLoading] = useState(false)
   const [event, setEvent] = useState(null)
@@ -45,6 +47,7 @@ export default function App() {
 
   const logout = useCallback(() => {
     setToken(null)
+    setMe(null)
     setEvent(null)
     setEvents([])
     setScreen('login')
@@ -69,7 +72,7 @@ export default function App() {
         return
       }
       try {
-        await fetchMe()
+        setMe(await fetchMe())
         await loadEvents()
         setScreen('events')
       } catch {
@@ -80,6 +83,7 @@ export default function App() {
   }, [loadEvents])
 
   const onAuthed = useCallback(async () => {
+    setMe(await fetchMe())
     await loadEvents()
     setScreen('events')
   }, [loadEvents])
@@ -174,6 +178,16 @@ export default function App() {
           onPick={pickEvent}
           onLogout={logout}
           onRetry={loadEvents}
+          isAdmin={me?.role === 'admin'}
+          onAdmin={() => setScreen('admin')}
+        />
+      )}
+
+      {screen === 'admin' && (
+        <AdminHome
+          onBack={() => setScreen('events')}
+          onToast={setToast}
+          onEventsChanged={loadEvents}
         />
       )}
 
